@@ -1,0 +1,15 @@
+---
+title: I am Title
+template: default
+blocks:
+  - type: text
+    content: >-
+      This is my test content
+  - type: gallery
+    images:
+      - one.jpg
+      - two.jpg
+---
+{% include 'test.html' %}
+
+<h4>this is me {{title}}</h4>

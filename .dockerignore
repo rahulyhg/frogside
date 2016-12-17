@@ -1,0 +1,5 @@
+example/vendor
+docker-compose.*.yml
+Dockerfile
+env.sh
+defaults.env
