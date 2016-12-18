@@ -29,8 +29,11 @@ services:
 
   client:
     build: ./client
+    command: start
     ports:
       - 7200:7200
     volumes:
-      - /app/node-modules
-      - .:/app
+      - ./client:/app
+      - /app/node_modules/
+    environment:
+      PORT: 7200

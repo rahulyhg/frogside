@@ -8,5 +8,3 @@ RUN npm install
 EXPOSE 7200
 
 ENTRYPOINT ["npm"]
-
-COMMAND ["start"]
