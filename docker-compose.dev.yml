@@ -13,14 +13,24 @@ services:
   #     ports:
   #       - "1080:80"
 
-  app:
+  server:
     build: .
     command: php -S 0.0.0.0:7000 -t public public/index.php
     volumes:
       - ./public:/app/public
+      - ./client/src:/app/public/client/src
+      - ./client/node_modules:/app/public/vendor
       - ./Frogside:/app/Frogside
     ports:
       - 7000:7000
     env_file: defaults.env
     environment:
       FROGSIDE_DEBUG: 'true'
+
+  client:
+    build: ./client
+    ports:
+      - 7200:7200
+    volumes:
+      - /app/node-modules
+      - .:/app
