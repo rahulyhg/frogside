@@ -1,39 +1,9 @@
 version: '2'
-
-volumes:
-  caminio-mongo-vol:
-
 services:
-
-  # maildev:
-  #     image: djfarrelly/maildev:0.12.1
-  #     expose:
-  #       - 25
-  #       - 80
-  #     ports:
-  #       - "1080:80"
-
-  server:
+  app:
     build: .
-    command: php -S 0.0.0.0:7000 -t public public/index.php
-    volumes:
-      - ./public:/app/public
-      - ./client/src:/app/public/client/src
-      - ./client/node_modules:/app/public/vendor
-      - ./Frogside:/app/Frogside
+    command: php artisan serve --host=0.0.0.0 --port=3300
     ports:
-      - 7000:7000
-    env_file: defaults.env
-    environment:
-      FROGSIDE_DEBUG: 'true'
-
-  client:
-    build: ./client
-    command: start
-    ports:
-      - 7200:7200
+      - "3300:3300"
     volumes:
-      - ./client:/app
-      - /app/node_modules/
-    environment:
-      PORT: 7200
+      - ./src:/app

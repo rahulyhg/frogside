@@ -1,5 +1,5 @@
-example/vendor
-docker-compose.*.yml
-Dockerfile
+www/.sass-cache
+www/bower_components
+www/node_modules
+www/vendor
 env.sh
-defaults.env

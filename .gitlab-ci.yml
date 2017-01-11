@@ -1,0 +1,77 @@
+variables:
+    DOCKER_IMAGE_NAME: "www_flinkwork_com"
+    DOCKER_REPO: "registry.flinkwork.com"
+
+before_script:
+    - export DOCKER_NAME="${DOCKER_REPO}/${DOCKER_IMAGE_NAME}"
+    - export DC="$(which docker-compose) -p ci-auto-${CI_BUILD_REF}"
+    - echo "Starting scripts $(date)"
+    - echo "DC=${DC}"
+    - echo "using version $(${DC} version)"
+
+after_script:
+    - export DC="$(which docker-compose) -p ci-auto-${CI_BUILD_REF}"
+    - echo "DC=${DC}"
+    - ${DC} kill
+
+stages:
+    - build
+    - tag
+    - docker
+    - deploy
+
+# build the jekyll source and copy that into a git tag
+build_and_tag_image:
+    stage: build
+    only:
+        - master@product/www_flinkwork_com
+    script:
+        - git remote set-url --push origin ssh://git@gitlab.flinkwork.com:2222/product/${DOCKER_IMAGE_NAME}.git
+        - git tag -d $(git tag -l)
+        - git fetch --tags
+        - git checkout --detach
+        - TAG=$(git describe --abbrev=0 | awk -F . '{ printf "%d.%d.%d", $1, $2, $3 + 1}' )
+        - echo
+        - echo "preparing release ${TAG}"
+        - ${DC} build
+        - CID=$(${DC} run -d app)
+        - docker wait ${CID}
+        - docker logs ${CID}
+        - echo "working direcotry is ${PWD}"
+        - docker cp ${CID}:/app/_site dist/html
+        - echo ${TAG} > VERSION
+        - git add --all
+        - git commit -m "auto-committing ${TAG}"
+        - git tag -a -m "auto-committing ${TAG}" ${TAG}
+        - git checkout -B master origin/master
+        - git merge --no-ff -s ours -m "[ci skip] kill merging ${TAG}" ${TAG}
+        - git push --atomic origin master ${TAG}
+
+build_dist_image:
+    stage: build
+    only:
+        - tags@product/www_flinkwork_com
+    script:
+        - docker build -t ${DOCKER_NAME}:${CI_BUILD_TAG}-dist dist/    # build dist-image
+
+tag_dist_image:
+    stage: tag
+    only:
+        - tags@product/www_flinkwork_com
+    script:
+        - docker tag -f ${DOCKER_NAME}:${CI_BUILD_TAG}-dist ${DOCKER_NAME}:latest-dist
+
+publish_dist_image:
+    stage: docker
+    only:
+        - tags@product/www_flinkwork_com
+    script:
+        - docker push ${DOCKER_NAME}:${CI_BUILD_TAG}-dist
+        - docker push ${DOCKER_NAME}:latest-dist
+
+preview:
+    stage: deploy
+    only:
+        - tags@product/www_flinkwork_com
+    script:
+        - curl -X POST -F token=850eceb0cdcf54a0d1861745388e6a -F ref=master http://gitlab.flinkwork.com/api/v3/projects/76/trigger/builds
